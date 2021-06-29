@@ -1,0 +1,69 @@
+#%RAML 1.0
+title: twitterNotification-api-sys
+version: v1
+
+types:
+  message:
+    type: object
+    properties:
+      recipient_id:
+        type: number
+        required: true
+        example: 12345678
+      message_text:
+        type: string
+        minLength: 2
+        maxLength: 140
+        required: true
+        example: "hi,joe doe"
+        
+mediaType: application/json;charset=utf-8
+    
+/{businessId}:
+  uriParameters:
+    businessId: 
+      type: string
+  /message:  
+    description: this method is for send info about billing cycle  
+    /{id}:
+      uriParameters:
+        id: 
+          type: string
+      post:
+        displayName: sendDM
+        body:
+          application/json:
+            type: message
+            example:
+              value:
+                recipient_id: 12345678
+                message_text: "hi, joe doe"
+        responses:
+          200:
+            body:
+              application/json;charset=utf-8:
+                example: |
+                  {
+                     "code": 200,
+                     "message": "Successful transaction"
+                  }
+    
+  /user:
+    /{id}:
+      uriParameters:
+        id: 
+          type: string
+      get:
+        description: Obtain information about the id associated with the Twitter username
+        responses:
+          200:
+            body:
+              application/json:
+                properties:
+                  recipient_id:
+                    type: string
+                    required: true
+                    
+                  
+               
+        

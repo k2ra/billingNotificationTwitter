@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="get:\(businessId)\user\(id):application\json:twitternotification-api-sys-config">
+				<java:invoke-static doc:name="Invoke static" doc:id="a0a84d14-7aba-4eb9-a87d-d4a5a10fc5e1" class="flows.TwitterJ" method="retrieveNumberId()">
+			<java:args ><![CDATA[#[output application/java
+---
+{
+	
+}]]]></java:args>
+		</java:invoke-static>
+		<logger level="INFO" doc:name="Logger" doc:id="9cbe2844-c772-42cd-b856-36c4741d5bc8" message="#[payload]"/>
+		<choice doc:name="Choice" doc:id="9181cb90-7e1d-408c-a9a3-b6d681840faf" >
+			<when expression="#[attributes.statusCode == 200]">
+				<ee:transform doc:name="Transform Message" doc:id="60d76bc3-5610-47e1-8158-75c4b5f84eaa" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"recipient_id": payload
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="eab6f3bb-49c6-4ea1-af17-1a21bea54b43" message="#[payload]"/>
+			</when>
+			<otherwise >
+				<logger level="ERROR" doc:name="Logger" doc:id="6333788e-d32b-4285-8692-a62207be3055" message="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="14b5f010-4f23-4516-a92f-08e9dc46cf9d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "recipient_id": payload as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+    
+</flow>
+	</mule>

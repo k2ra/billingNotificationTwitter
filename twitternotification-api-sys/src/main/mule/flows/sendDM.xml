@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+	<flow name="post:\(businessId)\message\(id):application\json:twitternotification-api-sys-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<java:invoke-static doc:name="Invoke static" doc:id="5265a0e3-70e5-419e-aa5e-e1b4c203b461" class="flows.TwitterJ" method="directMessage(java.lang.Integer,java.lang.String)">
+			<java:args ><![CDATA[#[output application/java
+---
+{
+	recipientName:payload.recipient_id,
+	msg:payload.message_text
+}]]]></java:args>
+		</java:invoke-static>
+		<logger level="INFO" doc:name="Logger" doc:id="66de7e27-8c70-4883-9049-35532cdc053e" message="#[payload]"/>
+		<choice doc:name="Choice" doc:id="555f6dd7-4f39-4df6-aa66-67c9c20e4d02" >
+			<when expression="#[attributes.statusCode == 200]">
+				<logger level="INFO" doc:name="Logger" doc:id="5b1a4754-478f-445c-8c57-4e9d9cf50524" message="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="be187634-fa82-46de-a7ec-a826881659eb">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="a59d7451-d06c-43e0-8cfb-89f657f0c274" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="ERROR" doc:name="Logger" doc:id="59de2e3f-3ffa-42ca-a602-1fb640e663e2" message="#[payload]"/>
+			</otherwise>
+		</choice>
+    
+</flow>
+	</mule>

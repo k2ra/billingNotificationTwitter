@@ -1,0 +1,77 @@
+#%RAML 1.0
+title: twitterNotification-api-pro
+version: v1
+
+types:
+  message:
+    type: object
+    properties:
+      id:
+        type: string
+        required: true
+        example: "123456782020001"
+      name:
+        type: string
+        required: true
+        example: "joe"
+      lastName:
+        type: string
+        required: true
+        example: "doe"
+      twitterUser:
+        type: string
+        required: true
+        example: "joedoe"
+      billingCicle:
+        type: string
+        required: true
+        example: "5"
+      balanceDue:
+        type: string
+        required: true
+        example: "0.00"
+      lastBill:
+        type: string
+        required: true
+        example: "65.00"
+      dueDate:
+        type: string
+        required: true
+        example: "2019-01-01T00:00:00.000Z"
+        
+mediaType: application/json;charset=utf-8
+    
+/{businessId}:
+  uriParameters:
+    businessId: 
+      type: string
+  /message:  
+    description: this method is for send info about billing cycle  
+    post:
+      displayName: sendDM
+      body:
+        application/json;charset=utf-8:
+          type: message
+          example : |
+            {
+            "id": "123456782020001",
+            "name": "joe",
+            "lastName": "doe",
+            "twitterUser": "joedoe",
+            "billingCicle": "5",
+            "balanceDue": "0.00",
+            "lastBill": "65.00",
+            "dueDate": "2019-01-01T00:00:00.000Z"
+            }
+          
+      responses:
+        200:
+          body:
+            application/json;charset=utf-8:
+              example: |
+                {
+                   "code": 200,
+                   "message": "Successful transaction"
+                }
+  
+  

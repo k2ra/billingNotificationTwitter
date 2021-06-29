@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="9b114063-8adf-4ffc-aa5e-0f09b65636aa" basePath="/Twitter-notification-sys/v1/{businessId}">
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="post:\(businessId)\message:application\json:twitternotification-api-pro-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:id="b7ee473f-a242-4636-a996-63aa88e11902">
+            <ee:variables>
+				<ee:set-variable variableName="userName" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.twitterUser]]></ee:set-variable>
+				<ee:set-variable variableName="origPayload" ><![CDATA[payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="Logger" doc:id="8c0561f8-b1d5-4af0-a0ee-4637a185c74c" />
+		<flow-ref doc:name="getUserNumber" doc:id="dba6e7ca-81c2-4b7b-a1cf-2600ed5979f4" name="getUserNumber"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ddf24136-4afe-4a2d-9c10-16e44681cda7" />
+		
+    </flow>
+	<sub-flow name="getUserNumber" doc:id="dfed989f-5d43-42b1-a14e-4d4a3f3f02f0" >
+	<ee:transform doc:name="Transform Message" doc:id="f778ce7a-e094-4333-af71-927ddd9a7d1a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="c72b1772-43c6-496e-a626-edcd53ff30ec" config-ref="HTTP_Request_configuration" path="/user/{id}" responseTimeout="60000" outputMimeType="application/json">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	businessId : attributes.uriParams.businessId,
+	id : vars.userName
+}]]]></http:uri-params>
+			<http:response-validator >
+				<http:failure-status-code-validator values="404,403,401" />
+			</http:response-validator>
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="81f5d9be-11f1-4a66-9505-7c9f39aee3ae" />
+		<choice doc:name="Choice" doc:id="aaf39915-f084-4369-ae58-97a1b4ed4b89" >
+			<when expression="#[attributes.statusCode == 200]">
+				<logger level="INFO" doc:name="Logger" doc:id="69131ab9-886c-4707-9eaf-9948f1468349" />
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="991c6d3e-272a-44d3-a23a-a4a08aee2db3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="856d9b92-9575-4076-8f18-82c1b95f47dd" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="sendDMInformation" doc:id="68287a21-50d3-4a57-8c3a-b13a77122ec3" >
+	<ee:transform doc:name="Transform Message" doc:id="6fb05548-eac4-4666-ad7e-c13208789704" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"recipient_id": payload.recipient_id as Number,
+    "message_text": "Buen Dia , "++ vars.origPayload.name ++" "++ vars.origPayload.lastName++ "su Monto Vencido es:"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="9926ecc2-61e1-4396-a84e-56877e6ef764" config-ref="HTTP_Request_configuration" path="/sendDM"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cd94c66f-808e-490d-8aa4-c8367f2d2275" />
+		<choice doc:name="Choice" doc:id="66881961-deec-43d9-bdc8-410a2ebb941f" >
+			<when expression="#[attributes.statusCode == 200]">
+				<logger level="INFO" doc:name="Logger" doc:id="1b4690a3-b2c6-43f3-981f-8b1cdea21177" />
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 200,
+  message: "Successful transaction"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="f89c429c-2009-409a-87bf-65a02d2d8725" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="efdac768-2eb7-4be4-ae97-eb053432b942" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	
+</mule>
